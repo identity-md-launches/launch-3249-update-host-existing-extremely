@@ -58,6 +58,27 @@ The scene, animation, jokes, colours and fonts were kept as they were, as the br
 - `chrome` (border + shadow sticker buttons);
 - `layout`: only "text cut off by overflow: hidden" items, which are the ticker marquee and the decorative rotated `.scene-title` watermark. There is no horizontal scroll and no overlap.
 
+## Revision 2: reviewer findings
+
+An independent reviewer reported five defects. All five reproduced on the previous export, in headless Chromium 1248 (Playwright) with the real DM Sans and Space Grotesk files. The proxy refuses the browser's own font requests, so the fonts were downloaded with curl and served to the page from the scratch folder. Each fix is the smallest change to the cause; the scene, hero, dog, copy, colours and fonts are unchanged.
+
+| Finding | Reproduced (previous export) | Fix (`index.html`) | Recheck (new export) |
+| --- | --- | --- | --- |
+| Live panel unreachable above 430px (high) | The "Buy / CA" trigger was `display:none` at every width from 431 to 1440 (hamburger sheet and desktop nav) | Removed `.mobile-launch{display:none}` and the ≤430px `display:block`, so "Buy / CA" (line 60) shows at every width with the existing nav-link style | Trigger visible and opens LIVE ON ROBINHOOD CHAIN with the only-official-address warning at all 23 tested widths, 320–1440 |
+| Tokenomics overflows at 431px (high) | 431px: modal `scrollWidth` 420 > `clientWidth` 381; 480px: facts cut | Single-column rule moved from ≤430px to its own `@media(max-width:550px)` (line 40) | No horizontal overflow and no fact, code box or Copy button past the content edge at any tested width; 1 column through 550, 2 from 551 |
+| Ticker overlaps nav at tablet widths (high) | Text overlap of `$XLONGDOG` with "The lore"/"The numbers" at 751–800 (and at 841–1161 once Buy / CA is shown on desktop) | The reviewer's 840px was not enough once the fifth nav item shows on desktop, so the header breakpoints come from measuring the header content. Header-only rules moved out of the scene queries into ≤1220px (compact header, line 35) and ≤1070px (☰ sheet, line 37). The hero, scene and dog breakpoints (1080, 750, 430) are unchanged. | Every pixel width 320–1500 scanned: no text overlap, no brand-group overflow, nothing past the right edge, with both real and fallback fonts |
+| Copy toast clips the address (medium) | 390px: toast `scrollWidth` 308 > `clientWidth` 214 (success and failure messages) | `overflow-wrap:anywhere` on `.toast` (line 29) | 214/214, the full address visible inside the toast in both messages |
+| Clipboard fallback drops focus (medium) | After the `execCommand` fallback, focus was on BODY, and Tab went to the skip link while the modal was open | `legacyCopy` saves `document.activeElement` and restores it with `focus({preventScroll:true})` after removing the textarea (line 382) | Focus stays on Copy; the next Tab goes to "Buy on IMD ↗" inside the dialog |
+
+**Found while fixing (same cause as finding 3):** at 382–405px the ticker pill's box ran 8px under the Buy link, and at 431–467px the full "BUY $XLONGDOG ↗" label overlapped the pill. My earlier check compared text boxes only and missed both. Fixes:
+
+- the compact "BUY ↗" label now applies at ≤520px (line 42), not only at ≤430px;
+- the ticker pill is hidden at ≤405px (line 44), not only at ≤360px.
+
+The hero headline still names the dog on the first screen at 390.
+
+**Superseded:** rows 2 and 3 of the table above describe the previous round's ≤430px and ≤360px rules, which these changes replace.
+
 ## Verification (final source)
 
 | Check | Command | Result |
@@ -65,9 +86,12 @@ The scene, animation, jokes, colours and fonts were kept as they were, as the br
 | Build | `node scripts/build.mjs` | `build ok` (10 external URL references, all on the allow-list; one address only); `cmp` confirms `dist/` matches the root files |
 | Syntax | `node --check` on the extracted inline script | OK |
 | Typecheck | `tsc --noEmit --allowJs --checkJs --target es2022 --lib es2022,dom,dom.iterable` (TypeScript 5.9.3 in a scratch folder) | exit 0 |
-| Interactions, Chromium at 320 / 390 / 1440 (50 assertions) | Playwright script, external requests blocked | 50/50 on the final run (an earlier run of the same build reported 49/50; the failing assertion was not captured and the rerun passed) |
-| Keyboard / inert / fallback / subpath / meta (11 assertions) | Playwright, 390, reduced motion, no clipboard permission | 11/11 |
-| Design probe | `node .imd/reads/skills/design-critic/scripts/taste.mjs --out test/scratch/taste` | 9/16 |
+| Interactions, Chromium at 320 / 390 / 1440 (50 assertions) | Playwright script, external requests blocked | 50/50 (previous round; not rerun this revision, the scratch script was not kept) |
+| Keyboard / inert / fallback / subpath / meta (11 assertions) | Playwright, 390, reduced motion, no clipboard permission | 11/11 (previous round; not rerun this revision) |
+| Revision 2 regression suite, 23 widths 320–1440, real fonts | Playwright script (scratch): header overlap/offscreen, document overflow, Buy / CA visible and opens the live panel with warning, live and tokenomics modal overflow, toast wrap (success and failure), focus after fallback copy | All pass on the new export. The same script on the previous export fails 28 assertions, covering all five findings. |
+| Header scan, every width 320–1500 | Playwright script (scratch), real fonts and fonts blocked | 0 widths with overlap or overflow, both runs |
+| Screenshots | 390 first screen, 390 live panel, 600 menu open, 431 tokenomics, 1080 and 1440 first screen, 1440 live panel | Reviewed; no console errors with fonts served locally |
+| Design probe | `node .imd/reads/skills/design-critic/scripts/taste.mjs --out test/scratch/taste` (Playwright supplied via `IMD_PLAYWRIGHT`, pointed at the installed Chromium 1248) | 9/16, the same checks as the previous round. `layout` fails only on clipped marquee/watermark text; there is no horizontal scroll and no text overlap. |
 
 **Interaction assertions:**
 
@@ -100,6 +124,8 @@ Screenshots were reviewed at 390 and 1440 (first screen), plus the launch and to
 ## Limitations and completion
 
 - WebKit could not start on this machine (missing system libraries), so Safari/iOS behaviour was not tested.
+- The headless Chromium shell has no font with the decorative `⧉` (U+29C9) on the CA chip, so it rendered as a box in screenshots. It is `aria-hidden`. On real devices it depends on the system symbol font; this was not checked.
+- Header widths were measured with the bundled DM Sans and with Chromium's fallback fonts on Linux. Other platforms' fallback fonts (shown if Google Fonts fails to load) were not measured.
 - No screen reader, physical-device, forced-colors or native-zoom checks were run.
 - External destinations were checked for exact URLs, not fetched.
 - The `navigator.clipboard` path was verified in Chromium with permission granted; the `execCommand` fallback was verified without permission.

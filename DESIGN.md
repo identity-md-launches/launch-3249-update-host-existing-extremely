@@ -69,7 +69,9 @@ The probe measured every solid text/background pair at ≥4.5:1. Text over the s
 ## Layout
 
 - The page is a single fixed stage. Vertical scroll is translated to horizontal camera movement (`travelPerScroll` 1.38 desktop / 1.65 under 750px). Scenes are `sceneWidth` = max(1320, innerWidth × 1.48, or × 1.9 under 750px) wide. Only the current chapter ±2/+3 are in the DOM.
-- **Header:** 74px high (65px ≤750px), with the brand group at the leading edge, nav centred and the Buy link at the trailing edge. Under 750px the nav collapses into a ☰ sheet and the Buy link stays visible.
+- **Header:** 74px high (65px ≤1070px), with the brand group at the leading edge, nav centred and the Buy link at the trailing edge. The nav has five items at every width: The lore, The numbers, How to scroll, Surprise me and Buy / CA. At ≤1070px the nav collapses into a ☰ sheet and the Buy link stays visible. The header's breakpoints are separate from the scene's, because they come from the measured width of the header content (logo, wordmark, ticker pill, five nav items, Buy link):
+  - the full-size header needs about 1205px;
+  - the compact header needs about 1059px.
 - **Bottom controls:** three clusters (playback, progress, contract chip + tail/help) in a space-between flex row. Under 750px the row wraps:
   - row 1 is the progress track plus the CA chip;
   - row 2 is the playback and tail/help clusters.
@@ -78,13 +80,17 @@ The probe measured every solid text/background pair at ≥4.5:1. Text over the s
 | Width | Changes |
 | --- | --- |
 | ≥1500px | Thicker dog body and larger head |
-| ≤1080px | Header tagline hidden, smaller wordmark and controls |
-| ≤750px | Mobile header and menu, hero repositioned, bottom bar wraps, story bubble narrowed |
-| ≤430px | Hero h1 52px, single-column fact grid, Buy link shows "BUY ↗" (ticker text hidden, accessible name keeps it), "Buy / CA" item in the menu |
-| ≤360px | `$XLONGDOG` ticker pill hidden so the logo, wordmark, Buy and menu fit at 320px |
+| ≤1220px (header only, line 35) | Header tagline hidden; smaller wordmark, ticker pill, Buy link and nav gap |
+| ≤1080px | Hero, story bubble and bottom controls tightened |
+| ≤1070px (header only, line 37) | 65px mobile header; nav becomes the ☰ dropdown sheet (all five items, including Buy / CA) |
+| ≤750px | Hero repositioned, bottom bar wraps, story bubble narrowed, toast narrowed to 220px |
+| ≤550px (line 40) | Single-column tokenomics fact grid (two columns above, where the contract box and long values fit) |
+| ≤520px (line 42) | Buy link shows "BUY ↗" (ticker text hidden, accessible name keeps it); tighter header gap |
+| ≤430px | Hero h1 52px, smaller wordmark |
+| ≤405px (line 44) | `$XLONGDOG` ticker pill hidden so the logo, wordmark, Buy and menu fit without touching |
 
 - Modal: centred, `width: min(650px, 100%)`, `max-height: calc(100vh - 50px)`, scrolls internally; padding `clamp(25px, 4vw, 48px)`.
-- Measured: no horizontal scroll at 320, 390 or 1440. The first screen at 390 shows the logo, wordmark, BUY, the dog scene, the hero actions and the CA chip.
+- Measured in Chromium with the real web fonts and with fallback fonts: the header content does not overlap at any width from 320 to 1500px (checked at every pixel), the tokenomics modal has no horizontal overflow at the widths tested (320–1440), and there is no horizontal scroll at 320, 390 or 1440. The first screen at 390 shows the logo, wordmark, BUY, the dog scene, the hero actions and the CA chip.
 
 ## Elevation & Depth
 
@@ -123,16 +129,16 @@ Borders are thick (2–5px) and navy on cream surfaces, and 1px white-alpha on d
 
 | Component | Source | Notes |
 | --- | --- | --- |
-| Brand | `.brand`, `.brand-logo`, `.brand-wordmark`, `.ticker-pill` (lines 45–51) | `logo.png` at 34px (28px mobile), round, decorative `alt=""`; wordmark with yellow "long". |
-| Buy link | `a.button.buy-button` (line 58) | Real link to the IMD buy page, `target="_blank" rel="noopener noreferrer"`, accessible name "Buy $XLONGDOG on IMD (opens in a new tab)". |
-| Nav link | `.nav-link` buttons with `data-panel` | Open a modal panel; `.mobile-launch` ("Buy / CA") shows only at ≤430px in the menu sheet. |
+| Brand | `.brand`, `.brand-logo`, `.brand-wordmark`, `.ticker-pill` (lines 50–54) | `logo.png` at 34px (28px mobile), round, decorative `alt=""`; wordmark with yellow "long". |
+| Buy link | `a.button.buy-button` (line 62) | Real link to the IMD buy page, `target="_blank" rel="noopener noreferrer"`, accessible name "Buy $XLONGDOG on IMD (opens in a new tab)". |
+| Nav link | `.nav-link` buttons with `data-panel` (lines 56–60) | Open a modal panel. "Buy / CA" (`.mobile-launch`, kept for history) opens the LIVE ON ROBINHOOD CHAIN panel. It shows at every width, in the desktop nav and in the ☰ sheet. |
 | Hero buttons | `.button.primary`, `.button.ghost` | Primary scrolls to chapter 2; ghost opens the lore panel. |
 | Control button | `.control-button` | Glass pill used for pause, auto-pan, ruler, tail and help. `aria-pressed` turns it yellow. |
-| CA chip | `button.control-button.ca-chip[data-copy-ca]` (line 99) | Shows `CA 0x3026…dc6c ⧉`. Click copies the full address and shows a toast. Always visible in the bottom bar. |
-| Toast | `#toast` `role="status"` | Sticker card, top right, 3.8s. Also announces copy results. |
+| CA chip | `button.control-button.ca-chip[data-copy-ca]` (line 103) | Shows `CA 0x3026…dc6c ⧉`. Click copies the full address and shows a toast. Always visible in the bottom bar. |
+| Toast | `#toast` `role="status"` | Sticker card, top right, 3.8s. Also announces copy results. `overflow-wrap:anywhere` so the full 42-character address wraps inside the 220px mobile toast. |
 | Info modal | `.modal-backdrop > .info-modal[role=dialog]` | `openPanel(type)` fills `#modalBody` from `PANELS`. Focus moves to close, Tab is trapped, Escape and backdrop close it, header and main are `inert` while open, and focus returns to the trigger (or the ☰ button if the trigger was in the closed menu). |
-| Fact grid | `.fact-grid > .fact` (`.fact-wide` spans both columns) | Tokenomics values; one column at ≤430px. |
-| Contract box | `CA_BOX` → `.ca-box > code.ca-code + button.ca-copy[data-copy-ca]` | Full address in monospace, wraps anywhere, `user-select: all`. Copy uses `navigator.clipboard`, then a `textarea` + `execCommand('copy')` fallback, and finally selects the text and asks for Ctrl+C. The button reads "Copied" for 2s. |
+| Fact grid | `.fact-grid > .fact` (`.fact-wide` spans both columns) | Tokenomics values; one column at ≤550px. |
+| Contract box | `CA_BOX` → `.ca-box > code.ca-code + button.ca-copy[data-copy-ca]` | Full address in monospace, wraps anywhere, `user-select: all`. Copy uses `navigator.clipboard`, then a `textarea` + `execCommand('copy')` fallback, and finally selects the text and asks for Ctrl+C. The fallback puts focus back on the element that had it (the Copy button), so the modal's focus trap still holds. The button reads "Copied" for 2s. |
 | Link row | `LINK_ROW` → `nav.link-row` | Pill links Buy · Chart · Explorer · Contract · Source post (first one yellow). Each has a descriptive accessible name. Used in the about and tokenomics panels; the launch panel uses the same component with long labels. |
 | Warning | `p.warning` | Callout for the official-address and no-returns notes. |
 | Story bubble, floating status, progress, ticker strip, gags, placards | lines 21–29 | Scene chrome, unchanged from the original design. |

@@ -84,8 +84,11 @@ Run against the final `dist/` export in headless Chromium (Playwright). Full det
 | Build + static checks | `node scripts/build.mjs` | pass; `dist/` byte-identical to the root files (`cmp`) |
 | JS syntax | `node --check` on the extracted inline script | pass |
 | Typecheck | `tsc 5.9.3 --noEmit --allowJs --checkJs --lib es2022,dom` on the extracted inline script (TypeScript installed in a scratch folder, not committed) | 0 errors after adding JSDoc casts (11 reported at first) |
-| Interactions at 320 / 390 / 1440 | Playwright script (scratch) | 50/50 on the final run (one earlier run reported 49/50 without isolating which check failed; rerun clean) |
-| Keyboard, inert, clipboard fallback, subpath, meta | Playwright script (scratch) | 11/11 |
+| Interactions at 320 / 390 / 1440 | Playwright script (scratch) | 50/50 (previous round) |
+| Keyboard, inert, clipboard fallback, subpath, meta | Playwright script (scratch) | 11/11 (previous round) |
+| Revision 2 regression suite (23 widths 320–1440, real fonts) | Playwright script (scratch) | all pass. Covers Buy / CA reachable at every width, no header overlap, tokenomics/live modal without horizontal overflow, toast wraps the full address, focus kept after fallback copy. |
+| Header overlap scan, every width 320–1500 | Playwright script (scratch), real and fallback fonts | 0 failing widths |
+| Typecheck (this revision) | `tsc 5.9.3 --noEmit --allowJs --checkJs` on the extracted inline script | 0 errors |
 | Design probe | `node .imd/reads/skills/design-critic/scripts/taste.mjs --out test/scratch/taste` | 9/16; every failure comes from the existing design the brief says to keep (see `VALIDATION.md`) |
 
 Limitations:
